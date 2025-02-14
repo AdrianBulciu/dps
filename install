@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+HERE=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+
+rm -rf /usr/local/bin/dps
+cp $HERE/dps /usr/local/bin/dps
+
+mkdir -p /etc/dps/
+
+rm -rf /etc/dps/options.config
+cp $HERE/options.config /etc/dps/options.config
+
+rm -rf /etc/dps/template.tmpl
+cp $HERE/template.tmpl /etc/dps/template.tmpl

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+rm /usr/local/bin/dps
+rm /etc/dps/options.config
+rm /etc/dps/template.tmpl
+rmdir /etc/dps

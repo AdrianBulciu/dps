@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+if [ "${BASH_VERSINFO:-0}" -lt 5 ]
+then
+	echo "Minimum BASH version required is 5"
+	exit 1
+fi
+
+GREEN="\033[1;32m"
+RESET="\033[0m"
+
+selected_item=1
+menu_items=()
+
+source /etc/dps/options.config
+
+function print_menu  # selected_item, ...menu_items
+{
+	local menu_size="${#menu_items[@]}"
+
+	for (( i = 0; i < $menu_size; ++i ))
+	do
+		if [ "$i" = "$selected_item" ]
+		then
+			echo -e "${GREEN}▶ \e[4m${menu_items[i]}\e[0m${RESET}"
+			# echo -e "${GREEN}▶ ${menu_items[i]}${RESET}"
+		else
+			echo -e "  ${menu_items[i]}"
+		fi
+	done
+}
+
+function run_menu  # selected_item, ...menu_items
+{
+	local menu_size="${#menu_items[@]}"
+	local menu_limit=$((menu_size - 1))
+
+	print_menu
+
+	while read -rsn1 input
+	do
+		case "$input"
+		in
+			$'\x1B')  # ESC ASCII code (https://dirask.com/posts/ASCII-Table-pJ3Y0j)
+				read -rsn1 -t 0.1 input
+				if [ "$input" = "[" ]  # occurs before arrow code
+				then
+					read -rsn1 -t 0.1 input
+					case "$input"
+					in
+						A)  # Up Arrow
+							if [ "$selected_item" -gt 1 ]
+							then
+								selected_item=$((selected_item - 1))
+								echo -en "\e[${menu_size}A" # go up to the beginning to re-render
+								print_menu
+							fi
+							;;
+						B)  # Down Arrow
+							if [ "$selected_item" -lt "$menu_limit" ]
+							then
+								selected_item=$((selected_item + 1))
+								echo -en "\e[${menu_size}A" # go up to the beginning to re-render
+								print_menu
+							fi
+							;;
+					esac
+				fi
+				read -rsn5 -t 0.1  # flushing stdin
+				;;
+			'k'|'j')
+				if [ "$input" = "j" ]  # down
+				then
+					if [ "$selected_item" -lt "$menu_limit" ]
+					then
+						selected_item=$((selected_item + 1))
+						echo -en "\e[${menu_size}A" # go up to the beginning to re-render
+						print_menu
+					fi
+				elif [ "$input" = "k" ] # up
+				then
+					if [ "$selected_item" -gt 1 ]
+					then
+						selected_item=$((selected_item - 1))
+						echo -en "\e[${menu_size}A" # go up to the beginning to re-render
+						print_menu
+					fi
+				fi
+				;;
+			"")  # Enter key
+				container="${menu_items[$selected_item]}"
+				container_name="${container%% *}"
+
+				for shell in "${SHELLS[@]}"; do
+					if docker exec "${container_name}" which "$shell" &>/dev/null; then
+						docker exec -it "${container_name}" "$shell"
+						break
+					fi
+				done
+				if $RENDER_MENU_AFTER_CONTAINER_EXIT; then
+					run_menu
+				else
+					exit 1
+				fi
+				;;
+		esac
+	done
+}
+
+while read -r line ; do
+	menu_items+=("$line")
+done < <(docker ps --format "$(cat /etc/dps/template.tmpl)")
+
+if [ "${#menu_items[@]}" -eq 1 ]; then
+	echo "No containers found"
+	exit 1
+fi
+
+run_menu
