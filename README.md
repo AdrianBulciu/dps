@@ -44,7 +44,7 @@ After making changes to settings or the template you must run the install script
 
 ## Demo
 
-https://github.com/user-attachments/assets/0bdc9601-0f5d-4397-bd76-878b27c5d890
+![dps-demo](https://github.com/user-attachments/assets/bc89b964-e9c4-490f-84a1-a5b1a39d8dd3)
 
 ## License
 
