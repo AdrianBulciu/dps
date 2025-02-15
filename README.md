@@ -8,7 +8,7 @@ A faster way of using 'docker ps' combined with a shell 'docker exec'
 Download & Unzip the project:
 
 ```
-curl -L -O https://github.com/AdrianBulciu/dps/archive/main.zip
+curl -L -O https://github.com/adrianbulciu/dps/archive/main.zip
 
 unzip main.zip
 ```
